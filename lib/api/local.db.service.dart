@@ -9,18 +9,21 @@ class LocalDBService {
     return '${dir.path}/$filename';
   }
 
-  Future<File> _getFile(String filename) async {
+  Future<File> _getFile(String filename, {bool forceUpdate = false}) async {
     final path = await _getFilePath(filename);
     final file = File(path);
-    if (!await file.exists()) {
+
+    if (forceUpdate || !await file.exists()) {
       final data = await rootBundle.loadString('assets/data/$filename');
-      await file.writeAsString(data); // Primera carga desde assets
+      await file.writeAsString(data); // Sobreescribe si se fuerza
     }
+
     return file;
   }
 
-  Future<List<Map<String, dynamic>>> getAll(String filename) async {
-    final file = await _getFile(filename);
+  Future<List<Map<String, dynamic>>> getAll(String filename,
+      {bool forceUpdate = false}) async {
+    final file = await _getFile(filename, forceUpdate: forceUpdate);
     final contents = await file.readAsString();
     return List<Map<String, dynamic>>.from(jsonDecode(contents));
   }
