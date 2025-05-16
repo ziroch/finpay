@@ -4,12 +4,14 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:finpay/config/images.dart';
 import 'package:finpay/config/textstyle.dart';
 import 'package:finpay/controller/home_controller.dart';
+import 'package:finpay/controller/reserva_controller.dart';
 import 'package:finpay/utils/utiles.dart';
 import 'package:finpay/view/home/top_up_screen.dart';
 import 'package:finpay/view/home/transfer_screen.dart';
 import 'package:finpay/view/home/widget/circle_card.dart';
 import 'package:finpay/view/home/widget/custom_card.dart';
 import 'package:finpay/view/home/widget/transaction_list.dart';
+import 'package:finpay/view/reservas/reservas_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -223,13 +225,21 @@ class HomeView extends StatelessWidget {
                       hoverColor: Colors.transparent,
                       splashColor: Colors.transparent,
                       onTap: () {
-                        Get.to(const TransferScreen(),
-                            transition: Transition.downToUp,
-                            duration: const Duration(milliseconds: 500));
+                        Get.to(
+                          () => ReservaScreen(),
+                          binding: BindingsBuilder(() {
+                            Get.delete<
+                                ReservaController>(); // 🔥 elimina instancia previa
+
+                            Get.create(() => ReservaController());
+                          }),
+                          transition: Transition.downToUp,
+                          duration: const Duration(milliseconds: 500),
+                        );
                       },
                       child: circleCard(
                         image: DefaultImages.transfer,
-                        title: "Transfer",
+                        title: "Reservar",
                       ),
                     )
                   ],

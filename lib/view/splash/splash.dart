@@ -30,12 +30,12 @@ class _SplashScreenState extends State<SplashScreen> {
     });
     final db = LocalDBService();
 
-    await db.getAll("clientes.json");
-    await db.getAll("autos.json");
-    await db.getAll("pisos.json");
-    await db.getAll("lugares.json");
-    await db.getAll("reservas.json");
-    await db.getAll("pagos.json");
+    await db.getAll("clientes.json", forceUpdate: true);
+    await db.getAll("autos.json", forceUpdate: true);
+    await db.getAll("pisos.json", forceUpdate: true);
+    await db.getAll("lugares.json", forceUpdate: true);
+    await db.getAll("reservas.json", forceUpdate: true);
+    await db.getAll("pagos.json", forceUpdate: true);
   }
 
   @override
