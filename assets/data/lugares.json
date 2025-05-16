@@ -1,0 +1,6 @@
+[
+  { "codigoPiso": "P1", "codigoLugar": "P1L001", "descripcionLugar": "Lugar 1" },
+  { "codigoPiso": "P1", "codigoLugar": "P1L002", "descripcionLugar": "Lugar 2" },
+  { "codigoPiso": "P2", "codigoLugar": "P2L001", "descripcionLugar": "Lugar 1" },
+  { "codigoPiso": "P2", "codigoLugar": "P2L002", "descripcionLugar": "Lugar 2" }
+]
