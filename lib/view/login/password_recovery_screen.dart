@@ -88,7 +88,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                           height: 4,
                         ),
                         Text(
-                          "Enter your Phone number to recover your password",
+                          "Ingrese su numero de Celular para resetear el password",
                           textAlign: TextAlign.center,
                           style: Theme.of(context)
                               .textTheme
@@ -113,7 +113,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                               // color:  HexColor(AppTheme.secondaryColorString!)
                             ),
                           ),
-                          hintText: "Phone Number",
+                          hintText: "Numero Celular",
                           inputType: TextInputType.phone,
                           textEditingController:
                               authController.pswdRecoveryController.value,
@@ -136,7 +136,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                           },
                           child: customButton(
                               HexColor(AppTheme.primaryColorString!),
-                              "Continue",
+                              "Continuar",
                               HexColor(AppTheme.secondaryColorString!),
                               context),
                         ),
