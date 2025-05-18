@@ -1,0 +1,1 @@
+Directorio utilizado para cargar capturas de la app
