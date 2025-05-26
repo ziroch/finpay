@@ -30,7 +30,8 @@ class _CarParkingPageState extends State<CarParkingPage> {
   }
 
   Future<void> _loadCars() async {
-    final String response = await rootBundle.loadString('data/autos.json');
+    final String response =
+        await rootBundle.loadString('assets/data/autos.json');
     final List<dynamic> data = json.decode(response);
     setState(() {
       cars = data.map((json) => Car.fromJson(json)).toList();
