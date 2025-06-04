@@ -22,6 +22,7 @@ class _CarParkingPageState extends State<CarParkingPage> {
   String? selectedSpot;
   String? selectedStartTime;
   String? selectedEndTime;
+  int? totalCost;
 
   @override
   void initState() {
@@ -36,6 +37,18 @@ class _CarParkingPageState extends State<CarParkingPage> {
     setState(() {
       cars = data.map((json) => Car.fromJson(json)).toList();
     });
+  }
+
+  void _calculateCost() {
+    if (selectedStartTime != null && selectedEndTime != null) {
+      final startHour = int.parse(selectedStartTime!.split(":")[0]);
+      final endHour = int.parse(selectedEndTime!.split(":")[0]);
+      int duration = endHour - startHour;
+      if (duration < 0) duration += 24; // Considera cruce de medianoche
+      setState(() {
+        totalCost = duration * 30000;
+      });
+    }
   }
 
   void _confirmReservation() {
@@ -53,12 +66,34 @@ class _CarParkingPageState extends State<CarParkingPage> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
+              // Cargar reservas existentes
+              List<Reservation> existingReservations =
+                  await FileStorage.loadReservations();
+
+              // Obtener el ID más alto
+              int nextId = 1;
+
+              if (existingReservations.isNotEmpty) {
+                final ids = existingReservations
+                    .map((r) => int.tryParse(r.id ?? '0') ?? 0)
+                    .toList();
+
+                final lastId =
+                    ids.isNotEmpty ? ids.reduce((a, b) => a > b ? a : b) : 0;
+
+                nextId = lastId + 1;
+              }
               final reservation = Reservation(
+                id: DateTime.now()
+                    .millisecondsSinceEpoch
+                    .toString(), // ID único simple
                 auto: selectedCar!,
                 estacionamiento: selectedSpot!,
                 horaInicio: selectedStartTime!,
                 horaFin: selectedEndTime!,
                 fecha: DateTime.now().toIso8601String(),
+                costoTotal: totalCost ?? 0,
+                estado: 'OCUPADO', // Estado inicial
               );
               await FileStorage.saveReservation(reservation);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -133,23 +168,50 @@ class _CarParkingPageState extends State<CarParkingPage> {
                     .toList(),
               ),
               SizedBox(height: 20),
-              Text('Hora de inicio:', style: TextStyle(fontSize: 18)),
-              DropdownButton<String>(
-                value: selectedStartTime,
-                hint: Text('Seleccionar hora inicio'),
-                items: times
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
-                onChanged: (val) => setState(() => selectedStartTime = val),
-              ),
-              Text('Hora de fin:', style: TextStyle(fontSize: 18)),
-              DropdownButton<String>(
-                value: selectedEndTime,
-                hint: Text('Seleccionar hora fin'),
-                items: times
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
-                onChanged: (val) => setState(() => selectedEndTime = val),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Hora de inicio:', style: TextStyle(fontSize: 18)),
+                        DropdownButton<String>(
+                          value: selectedStartTime,
+                          hint: Text('Hora inicio'),
+                          items: times
+                              .map((t) =>
+                                  DropdownMenuItem(value: t, child: Text(t)))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() => selectedStartTime = val);
+                            _calculateCost();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Hora de fin:', style: TextStyle(fontSize: 18)),
+                        DropdownButton<String>(
+                          value: selectedEndTime,
+                          hint: Text('Hora fin'),
+                          items: times
+                              .map((t) =>
+                                  DropdownMenuItem(value: t, child: Text(t)))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() => selectedEndTime = val);
+                            _calculateCost();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 30),
               if (selectedCar != null &&
@@ -173,6 +235,10 @@ class _CarParkingPageState extends State<CarParkingPage> {
                           style: TextStyle(fontSize: 16)),
                       Text('Hasta: $selectedEndTime',
                           style: TextStyle(fontSize: 16)),
+                      if (totalCost != null)
+                        Text('Costo estimado: $totalCost Gs',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                       SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: _confirmReservation,

@@ -1,20 +1,18 @@
-// lib/pages/reservation_management_page.dart
-
+// lib/pages/administrar_reservas.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../model/Alumno/reservation.dart';
-import '../model/Alumno/car.dart';
 
-class ReservationManagementPage extends StatefulWidget {
+class AdministrarReservasPage extends StatefulWidget {
   @override
-  _ReservationManagementPageState createState() =>
-      _ReservationManagementPageState();
+  _AdministrarReservasPageState createState() =>
+      _AdministrarReservasPageState();
 }
 
-class _ReservationManagementPageState extends State<ReservationManagementPage> {
+class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
   List<Reservation> reservations = [];
   String? filterDate;
   String? filterClientId;
@@ -38,12 +36,37 @@ class _ReservationManagementPageState extends State<ReservationManagementPage> {
   }
 
   Future<void> _deleteReservation(int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Eliminar Reserva'),
+        content: Text(
+            '¿Estás seguro de que deseas eliminar esta reserva?\n\nEsta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancelar')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Eliminar')),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     reservations.removeAt(index);
+
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/reservas.json');
     await file.writeAsString(
-        json.encode(reservations.map((r) => r.toJson()).toList()));
+      json.encode(reservations.map((r) => r.toJson()).toList()),
+    );
+
     setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Reserva eliminada')),
+    );
   }
 
   List<Reservation> _filteredReservations() {
@@ -55,11 +78,55 @@ class _ReservationManagementPageState extends State<ReservationManagementPage> {
     }).toList();
   }
 
+  Future<void> _payReservation(int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirmar Pago'),
+        content: Text(
+            '¿Deseas marcar esta reserva como pagada?\n\nCosto: ${reservations[index].costoTotal} Gs'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancelar')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Confirmar')),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      reservations[index] = Reservation(
+        id: reservations[index].id,
+        auto: reservations[index].auto,
+        estacionamiento: reservations[index].estacionamiento,
+        horaInicio: reservations[index].horaInicio,
+        horaFin: reservations[index].horaFin,
+        fecha: reservations[index].fecha,
+        costoTotal: reservations[index].costoTotal,
+        estado: 'PAGADO',
+      );
+    });
+
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/reservas.json');
+    await file.writeAsString(
+      json.encode(reservations.map((r) => r.toJson()).toList()),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Reserva marcada como pagada')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredReservations();
     return Scaffold(
-      appBar: AppBar(title: Text('Gestión de Reservas')),
+      appBar: AppBar(title: Text('Administrar Reservas')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -84,16 +151,28 @@ class _ReservationManagementPageState extends State<ReservationManagementPage> {
                       title: Text(
                           '${r.auto} -> ${r.estacionamiento} (${r.horaInicio} - ${r.horaFin})'),
                       subtitle: Text(
-                          'Fecha: ${r.fecha}\nCliente: ${r.auto.clienteId}'),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteReservation(index),
+                        'Fecha: ${r.fecha}\nCliente: ${r.auto.clienteId}\nCosto Total: ${r.costoTotal} Gs\nEstado: ${r.estado}',
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (r.estado != 'PAGADO')
+                            ElevatedButton(
+                              onPressed: () => _payReservation(index),
+                              child: Text('Pagar'),
+                            ),
+                          if (r.estado == 'PAGADO')
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteReservation(index),
+                            ),
+                        ],
                       ),
                     ),
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),

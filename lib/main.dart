@@ -20,7 +20,7 @@ class ParkingReservationApp extends StatelessWidget {
       routes: {
         '/': (context) => LoginPage(),
         '/parking': (context) => CarParkingPage(),
-        '/reservations': (context) => ReservationManagementPage(),
+        '/reservations': (context) => AdministrarReservasPage(),
       },
     );
   }
