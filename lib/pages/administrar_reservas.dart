@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../model/Alumno/reservation.dart';
+import '../utils/Alumno/pago_storage.dart';
+import '../model/Alumno/sistema_reservas.dart';
 
 class AdministrarReservasPage extends StatefulWidget {
   @override
@@ -84,20 +86,24 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
       builder: (context) => AlertDialog(
         title: Text('Confirmar Pago'),
         content: Text(
-            '¿Deseas marcar esta reserva como pagada?\n\nCosto: ${reservations[index].costoTotal} Gs'),
+          '¿Deseas marcar esta reserva como pagada?\n\nCosto: ${reservations[index].costoTotal} Gs',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancelar')),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text('Confirmar')),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Confirmar'),
+          ),
         ],
       ),
     );
 
     if (confirm != true) return;
 
+    // Actualiza el estado de la reserva a 'PAGADO'
     setState(() {
       reservations[index] = Reservation(
         id: reservations[index].id,
@@ -111,14 +117,25 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
       );
     });
 
+    // Guardar todas las reservas actualizadas
     final dir = await getApplicationDocumentsDirectory();
     final file = File('${dir.path}/reservas.json');
     await file.writeAsString(
       json.encode(reservations.map((r) => r.toJson()).toList()),
     );
 
+    // Crear y guardar el pago en pagos.json
+    final pago = Pago(
+      codigoPago: DateTime.now().millisecondsSinceEpoch.toString(),
+      codigoReservaAsociada: reservations[index].id ?? '',
+      montoPagado: reservations[index].costoTotal,
+      fechaPago: DateTime.now().toIso8601String(),
+    );
+
+    await PagoStorage.guardarPago(pago);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Reserva marcada como pagada')),
+      SnackBar(content: Text('El pago ha sido registrado')),
     );
   }
 

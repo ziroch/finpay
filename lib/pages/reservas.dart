@@ -3,22 +3,28 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../model/Alumno/car.dart';
+import '../model/Alumno/sistema_reservas.dart';
+
+//import '../model/Alumno/car.dart';
 import '../model/Alumno/reservation.dart';
 import '../utils/Alumno/file_storage.dart';
+import '../utils/Alumno/auto_storage.dart';
 
 class CarParkingPage extends StatefulWidget {
+  final String clienteId;
+  const CarParkingPage({Key? key, required this.clienteId}) : super(key: key);
+
   @override
   _CarParkingPageState createState() => _CarParkingPageState();
 }
 
 class _CarParkingPageState extends State<CarParkingPage> {
-  List<Car> cars = [];
+  List<Auto> auto = [];
   final List<String> parkingSpots = ["A1", "B2", "C3", "D4"];
   final List<String> times =
       List.generate(24, (index) => '${index.toString().padLeft(2, '0')}:00');
 
-  Car? selectedCar;
+  Auto? selectedCar;
   String? selectedSpot;
   String? selectedStartTime;
   String? selectedEndTime;
@@ -31,11 +37,10 @@ class _CarParkingPageState extends State<CarParkingPage> {
   }
 
   Future<void> _loadCars() async {
-    final String response =
-        await rootBundle.loadString('assets/data/autos.json');
-    final List<dynamic> data = json.decode(response);
+    final loadedCars = await AutoStorage.cargarAutos(widget.clienteId);
+    print('Autos cargados: $loadedCars');
     setState(() {
-      cars = data.map((json) => Car.fromJson(json)).toList();
+      auto = loadedCars;
     });
   }
 
@@ -92,7 +97,7 @@ class _CarParkingPageState extends State<CarParkingPage> {
                 horaInicio: selectedStartTime!,
                 horaFin: selectedEndTime!,
                 fecha: DateTime.now().toIso8601String(),
-                costoTotal: totalCost ?? 0,
+                costoTotal: (totalCost ?? 0).toDouble(),
                 estado: 'OCUPADO', // Estado inicial
               );
               await FileStorage.saveReservation(reservation);
@@ -132,7 +137,7 @@ class _CarParkingPageState extends State<CarParkingPage> {
               Text('Selecciona un auto:', style: TextStyle(fontSize: 18)),
               Wrap(
                 spacing: 10,
-                children: cars
+                children: auto
                     .map((car) => ElevatedButton(
                           onPressed: () {
                             setState(() {

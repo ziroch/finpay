@@ -1,12 +1,12 @@
-import 'car.dart';
+import 'sistema_reservas.dart';
 
 class Reservation {
-  final Car auto;
+  final Auto auto;
   final String estacionamiento;
   final String horaInicio;
   final String horaFin;
   final String fecha;
-  final int costoTotal;
+  final double costoTotal;
   final String estado;
   final String id;
 
@@ -25,7 +25,7 @@ class Reservation {
     final idValue = json['id'];
     return Reservation(
       id: idValue?.toString() ?? '0',
-      auto: Car.fromJson(json['auto']),
+      auto: Auto.fromJson(json['auto']),
       estacionamiento: json['estacionamiento'],
       horaInicio: json['horaInicio'],
       horaFin: json['horaFin'],

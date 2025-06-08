@@ -1,54 +1,72 @@
+// Actualización del modelo Cliente con campo de contraseña y encriptación MD5
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+
 class Cliente {
   String id;
+  String login;
   String nombre;
   String apellido;
   String telefono;
+  String passwordHash; // nueva propiedad encriptada
   List<Auto> autos;
 
   Cliente({
     required this.id,
+    required this.login,
     required this.nombre,
     required this.apellido,
     required this.telefono,
+    required this.passwordHash,
     required this.autos,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> json) => Cliente(
         id: json['id'],
+        login: json['login'],
         nombre: json['nombre'],
         apellido: json['apellido'],
         telefono: json['telefono'],
-        autos: List.empty(),
+        passwordHash: json['passwordHash'],
+        autos:
+            List<Auto>.from((json['autos'] ?? []).map((a) => Auto.fromJson(a))),
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'login': login,
         'nombre': nombre,
         'apellido': apellido,
         'telefono': telefono,
+        'passwordHash': passwordHash,
         'autos': autos.map((a) => a.toJson()).toList(),
       };
+
+  static String hashPassword(String password) {
+    return md5.convert(utf8.encode(password)).toString();
+  }
+
+  bool checkPassword(String password) {
+    return passwordHash == Cliente.hashPassword(password);
+  }
 }
 
 class Auto {
   String chapa;
   String marca;
   String modelo;
-  String chasis;
   String clienteId;
 
   Auto(
       {required this.chapa,
       required this.marca,
       required this.modelo,
-      required this.chasis,
       required this.clienteId});
 
   factory Auto.fromJson(Map<String, dynamic> json) => Auto(
         chapa: json['chapa'],
         marca: json['marca'],
         modelo: json['modelo'],
-        chasis: json['chasis'],
         clienteId: json['clienteId'],
       );
 
@@ -56,8 +74,41 @@ class Auto {
         'chapa': chapa,
         'marca': marca,
         'modelo': modelo,
-        'chasis': chasis,
         'clienteId': clienteId
+      };
+
+  // Método toString para mostrar el auto en la UI de forma amigable
+  @override
+  String toString() {
+    return '$marca $modelo ($chapa)';
+  }
+}
+
+class Pago {
+  String codigoPago;
+  String codigoReservaAsociada;
+  double montoPagado;
+  String fechaPago;
+
+  Pago({
+    required this.codigoPago,
+    required this.codigoReservaAsociada,
+    required this.montoPagado,
+    required this.fechaPago,
+  });
+
+  factory Pago.fromJson(Map<String, dynamic> json) => Pago(
+        codigoPago: json['codigoPago'],
+        codigoReservaAsociada: json['codigoReservaAsociada'],
+        montoPagado: json['montoPagado'].toDouble(),
+        fechaPago: DateTime.now().toIso8601String(), //,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'codigoPago': codigoPago,
+        'codigoReservaAsociada': codigoReservaAsociada,
+        'montoPagado': montoPagado,
+        'fechaPago': fechaPago,
       };
 }
 
@@ -147,33 +198,5 @@ class Reserva {
         'monto': monto,
         'estadoReserva': estadoReserva,
         'chapaAuto': chapaAuto,
-      };
-}
-
-class Pago {
-  String codigoPago;
-  String codigoReservaAsociada;
-  double montoPagado;
-  DateTime fechaPago;
-
-  Pago({
-    required this.codigoPago,
-    required this.codigoReservaAsociada,
-    required this.montoPagado,
-    required this.fechaPago,
-  });
-
-  factory Pago.fromJson(Map<String, dynamic> json) => Pago(
-        codigoPago: json['codigoPago'],
-        codigoReservaAsociada: json['codigoReservaAsociada'],
-        montoPagado: json['montoPagado'].toDouble(),
-        fechaPago: DateTime.parse(json['fechaPago']),
-      );
-
-  Map<String, dynamic> toJson() => {
-        'codigoPago': codigoPago,
-        'codigoReservaAsociada': codigoReservaAsociada,
-        'montoPagado': montoPagado,
-        'fechaPago': fechaPago.toIso8601String(),
       };
 }

@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+import '../../../model/Alumno/sistema_reservas.dart';
+import '../Alumno/registro_usuario.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -13,14 +19,38 @@ class _LoginPageState extends State<LoginPage> {
 
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
+  List<Cliente> _clientes = [];
 
-  void _login() {
+  @override
+  void initState() {
+    super.initState();
+    _loadClientes();
+  }
+
+  Future<void> _loadClientes() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/clientes.json');
+    if (await file.exists()) {
+      final data = jsonDecode(await file.readAsString()) as List;
+      setState(() {
+        _clientes = data.map((e) => Cliente.fromJson(e)).toList();
+      });
+    }
+  }
+
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      final user = userController.text;
-      final password = passwordController.text;
+      final user = userController.text.trim();
+      final password = passwordController.text.trim();
 
-      if (user == 'admin' && password == '1234') {
-        Navigator.pushReplacementNamed(context, '/parking');
+      final cliente = await autenticarUsuario(user, password);
+
+      if (cliente != null) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+          arguments: cliente,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Credenciales incorrectas')),
