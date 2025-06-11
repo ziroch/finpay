@@ -1,12 +1,12 @@
 // lib/pages/car_parking_page.dart
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../model/Alumno/sistema_reservas.dart';
+
+//import '../model/Alumno/car.dart';
 import '../model/Alumno/reservation.dart';
 import '../utils/Alumno/file_storage.dart';
 import '../utils/Alumno/auto_storage.dart';
@@ -21,10 +21,7 @@ class CarParkingPage extends StatefulWidget {
 
 class _CarParkingPageState extends State<CarParkingPage> {
   List<Auto> auto = [];
-  List<Map<String, dynamic>> pisos = [];
-  List<Map<String, dynamic>> lugares = [];
-  List<Map<String, dynamic>> lugaresDisponibles = [];
-  List<Reservation> reservas = [];
+  final List<String> parkingSpots = ["A1", "B2", "C3", "D4"];
   final List<String> times =
       List.generate(24, (index) => '${index.toString().padLeft(2, '0')}:00');
 
@@ -38,18 +35,6 @@ class _CarParkingPageState extends State<CarParkingPage> {
   void initState() {
     super.initState();
     _loadCars();
-    _loadPisosYLugares();
-    _loadReservas();
-  }
-
-  Future<String> _getLocalPath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
-  }
-
-  Future<File> _getLocalLugaresFile() async {
-    final path = await _getLocalPath();
-    return File('$path/lugares.json');
   }
 
   Future<void> _loadCars() async {
@@ -60,83 +45,19 @@ class _CarParkingPageState extends State<CarParkingPage> {
     });
   }
 
-  Future<void> _loadReservas() async {
-    final loaded = await FileStorage.loadReservations();
-    setState(() {
-      reservas = loaded;
-    });
-  }
-
-  Future<void> _loadPisosYLugares() async {
-    final pisosJson = await rootBundle.loadString('assets/data/pisos.json');
-    final decodedPisos =
-        List<Map<String, dynamic>>.from(json.decode(pisosJson));
-
-    final lugaresFile = await _getLocalLugaresFile();
-    if (!(await lugaresFile.exists())) {
-      final defaultLugaresJson =
-          await rootBundle.loadString('assets/data/lugares.json');
-      await lugaresFile.writeAsString(defaultLugaresJson);
-    }
-
-    final lugaresJson = await lugaresFile.readAsString();
-    final decodedLugares =
-        List<Map<String, dynamic>>.from(json.decode(lugaresJson));
-
-    setState(() {
-      pisos = decodedPisos;
-      lugares = decodedLugares;
-      lugaresDisponibles = decodedLugares;
-    });
-  }
-
-  bool _estaOcupado(String lugar) {
-    if (selectedStartTime == null || selectedEndTime == null) return false;
-    final start = int.parse(selectedStartTime!.split(":")[0]);
-    final end = int.parse(selectedEndTime!.split(":")[0]);
-
-    return reservas.any((r) {
-      if (r.estacionamiento != lugar) return false;
-      final rStart = int.parse(r.horaInicio.split(":")[0]);
-      final rEnd = int.parse(r.horaFin.split(":")[0]);
-      return (start < rEnd && end > rStart);
-    });
-  }
-
   void _calculateCost() {
     if (selectedStartTime != null && selectedEndTime != null) {
       final startHour = int.parse(selectedStartTime!.split(":")[0]);
       final endHour = int.parse(selectedEndTime!.split(":")[0]);
       int duration = endHour - startHour;
-      if (duration < 0) duration += 24;
+      if (duration < 0) duration += 24; // Considera cruce de medianoche
       setState(() {
         totalCost = duration * 30000;
       });
     }
   }
 
-  Future<void> _confirmReservation() async {
-    final existingReservations = await FileStorage.loadReservations();
-
-    final startHour = int.parse(selectedStartTime!.split(":")[0]);
-    final endHour = int.parse(selectedEndTime!.split(":")[0]);
-
-    final conflict = existingReservations.any((r) {
-      if (r.estacionamiento != selectedSpot) return false;
-      final rStart = int.parse(r.horaInicio.split(":")[0]);
-      final rEnd = int.parse(r.horaFin.split(":")[0]);
-      return (startHour < rEnd && endHour > rStart);
-    });
-
-    if (conflict) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Ese lugar ya está reservado en el horario elegido.')),
-      );
-      return;
-    }
-
+  void _confirmReservation() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -150,8 +71,12 @@ class _CarParkingPageState extends State<CarParkingPage> {
           ),
           TextButton(
             onPressed: () async {
-              final currentContext = context;
               Navigator.pop(context);
+              // Cargar reservas existentes
+              List<Reservation> existingReservations =
+                  await FileStorage.loadReservations();
+
+              // Obtener el ID más alto
               int nextId = 1;
 
               if (existingReservations.isNotEmpty) {
@@ -165,31 +90,19 @@ class _CarParkingPageState extends State<CarParkingPage> {
                 nextId = lastId + 1;
               }
               final reservation = Reservation(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                id: DateTime.now()
+                    .millisecondsSinceEpoch
+                    .toString(), // ID único simple
                 auto: selectedCar!,
                 estacionamiento: selectedSpot!,
                 horaInicio: selectedStartTime!,
                 horaFin: selectedEndTime!,
+                //fecha: DateTime.now().toIso8601String(),
                 fecha: DateFormat('dd/MM/yyyy').format(DateTime.now()),
                 costoTotal: (totalCost ?? 0).toDouble(),
-                estado: 'OCUPADO',
+                estado: 'OCUPADO', // Estado inicial
               );
               await FileStorage.saveReservation(reservation);
-
-              final lugaresFile = await _getLocalLugaresFile();
-              final content = await lugaresFile.readAsString();
-              final lugaresData =
-                  List<Map<String, dynamic>>.from(json.decode(content));
-              final updatedData = lugaresData.map((lugar) {
-                if (lugar['codigoLugar'] == selectedSpot) {
-                  return {...lugar, 'estado': 'OCUPADO'};
-                }
-                return lugar;
-              }).toList();
-              await lugaresFile.writeAsString(json.encode(updatedData));
-
-              await _loadReservas();
-              await _loadPisosYLugares();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Reserva confirmada')),
               );
@@ -246,27 +159,20 @@ class _CarParkingPageState extends State<CarParkingPage> {
                   style: TextStyle(fontSize: 18)),
               Wrap(
                 spacing: 10,
-                children: lugaresDisponibles.map((spot) {
-                  bool ocupado = _estaOcupado(spot['codigoLugar']);
-                  return ElevatedButton(
-                    onPressed: ocupado
-                        ? null
-                        : () {
+                children: parkingSpots
+                    .map((spot) => ElevatedButton(
+                          onPressed: () {
                             setState(() {
-                              selectedSpot = spot['codigoLugar'];
+                              selectedSpot = spot;
                             });
                           },
-                    child: Text(
-                        '${spot['codigoLugar']} (${spot['descripcionLugar']})'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ocupado
-                          ? Colors.grey
-                          : selectedSpot == spot['codigoLugar']
-                              ? Colors.green
-                              : null,
-                    ),
-                  );
-                }).toList(),
+                          child: Text(spot),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                selectedSpot == spot ? Colors.green : null,
+                          ),
+                        ))
+                    .toList(),
               ),
               SizedBox(height: 20),
               Row(

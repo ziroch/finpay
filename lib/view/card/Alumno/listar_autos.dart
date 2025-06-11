@@ -13,6 +13,11 @@ class ListarAutosPage extends StatelessWidget {
     return todosLosAutos.where((auto) => auto.clienteId == clienteId).toList();
   }
 
+  Future<int> obtenerCantidadAutosDelCliente() async {
+    final todosLosAutos = await AutoStorage.leerAutos();
+    return todosLosAutos.where((auto) => auto.clienteId == clienteId).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

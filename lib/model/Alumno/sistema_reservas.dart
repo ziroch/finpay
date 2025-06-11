@@ -1,6 +1,7 @@
 // Actualización del modelo Cliente con campo de contraseña y encriptación MD5
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:intl/intl.dart';
 
 class Cliente {
   String id;
@@ -101,7 +102,8 @@ class Pago {
         codigoPago: json['codigoPago'],
         codigoReservaAsociada: json['codigoReservaAsociada'],
         montoPagado: json['montoPagado'].toDouble(),
-        fechaPago: DateTime.now().toIso8601String(), //,
+        //fechaPago: DateTime.now().toIso8601String(), //,
+        fechaPago: DateFormat('dd/MM/yyyy').format(DateTime.now()),
       );
 
   Map<String, dynamic> toJson() => {

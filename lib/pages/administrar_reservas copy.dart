@@ -105,11 +105,18 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
 
     if (confirm != true) return;
 
-    final reservaPagada = reservations[index];
-
-    // Eliminamos la reserva pagada
+    // Actualiza el estado de la reserva a 'PAGADO'
     setState(() {
-      reservations.removeAt(index);
+      reservations[index] = Reservation(
+        id: reservations[index].id,
+        auto: reservations[index].auto,
+        estacionamiento: reservations[index].estacionamiento,
+        horaInicio: reservations[index].horaInicio,
+        horaFin: reservations[index].horaFin,
+        fecha: reservations[index].fecha,
+        costoTotal: reservations[index].costoTotal,
+        estado: 'PAGADO',
+      );
     });
 
     // Guardar todas las reservas actualizadas
@@ -131,7 +138,7 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
     await PagoStorage.guardarPago(pago);
 
     // Liberar el lugar
-    await _liberarLugar(reservaPagada.estacionamiento);
+    await _liberarLugar(reservations[index].estacionamiento);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('El pago ha sido registrado')),
