@@ -143,6 +143,49 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
     if (mounted) setState(() {}); // o refrescar lista si es necesario
   }
 
+  Future<void> _cancelReservation(int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Cancelar Reserva'),
+        content: Text(
+            '¿Deseas cancelar esta reserva?\n\nEsto eliminará la reserva y liberará el lugar.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Sí, cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final reservaCancelada = reservations[index];
+
+    // Eliminar reserva
+    setState(() {
+      reservations.removeAt(index);
+    });
+
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/reservas.json');
+    await file.writeAsString(
+      json.encode(reservations.map((r) => r.toJson()).toList()),
+    );
+
+    // Liberar el lugar
+    await _liberarLugar(reservaCancelada.estacionamiento);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Reserva cancelada')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredReservations();
@@ -152,15 +195,6 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
-              decoration:
-                  InputDecoration(labelText: 'Filtrar por fecha (YYYY-MM-DD)'),
-              onChanged: (value) => setState(() => filterDate = value),
-            ),
-            TextField(
-              decoration: InputDecoration(labelText: 'Filtrar por clienteId'),
-              onChanged: (value) => setState(() => filterClientId = value),
-            ),
             SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
@@ -175,19 +209,21 @@ class _AdministrarReservasPageState extends State<AdministrarReservasPage> {
                         //'Fecha: ${r.fecha}\nCliente: ${r.auto.clienteId}\nCosto Total: ${r.costoTotal} Gs\nEstado: ${r.estado}',
                         'Fecha: ${r.fecha}\nCosto Total: ${r.costoTotal} Gs\nEstado: ${r.estado}',
                       ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      trailing: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        direction: Axis.vertical,
                         children: [
-                          if (r.estado != 'PAGADO')
+                          if (r.estado != 'PAGADO') ...[
                             ElevatedButton(
                               onPressed: () => _payReservation(index),
                               child: Text('Pagar'),
                             ),
-                          if (r.estado == 'PAGADO')
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteReservation(index),
+                            ElevatedButton(
+                              onPressed: () => _cancelReservation(index),
+                              child: Text('Cancelar'),
                             ),
+                          ]
                         ],
                       ),
                     ),

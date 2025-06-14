@@ -115,64 +115,134 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Cantidad de Autos: $cantidadAutos',
-                  style: TextStyle(fontSize: 16)),
-              Text('Pagos realizados este mes: $pagosDelMes',
-                  style: TextStyle(fontSize: 16)),
-              SizedBox(height: 20),
-              ElevatedButton.icon(
-                icon: Icon(Icons.local_parking),
-                label: Text('Reservar Estacionamiento'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          CarParkingPage(clienteId: widget.cliente.id),
+              // Card superior con resumen
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                color: Colors.blue[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Resumen del Cliente',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[900],
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Icon(Icons.directions_car, color: Colors.blue),
+                              SizedBox(height: 4),
+                              Text('Autos: $cantidadAutos'),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Icon(Icons.payment, color: Colors.green),
+                              SizedBox(height: 4),
+                              Text('Pagos: $pagosDelMes'),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Icon(Icons.pending_actions, color: Colors.orange),
+                              SizedBox(height: 4),
+                              Text('Pendientes: $pagosPendientes'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 24),
+              // Segundo Card con botones
+              Expanded(
+                child: Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  color: Colors.grey[100],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 16.0),
+                    child: ListView(
+                      children: [
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.local_parking),
+                          label: Text('Reservar Estacionamiento'),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CarParkingPage(
+                                    clienteId: widget.cliente.id),
+                              ),
+                            ).then((_) => _cargarDatos());
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.manage_search),
+                          label: Text('Administrar Reservas'),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/reservations')
+                                .then((_) => _cargarDatos());
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.receipt_long),
+                          label: Text('Ver Pagos'),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/pagos')
+                                .then((_) => _cargarDatos());
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.directions_car),
+                          label: Text('Registrar Auto'),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RegistrarAutoPage(
+                                    clienteId: widget.cliente.id),
+                              ),
+                            ).then((_) => _cargarDatos());
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.list),
+                          label: Text('Mis Autos'),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ListarAutosPage(
+                                    clienteId: widget.cliente.id),
+                              ),
+                            ).then((_) => _cargarDatos());
+                          },
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
-              ElevatedButton.icon(
-                icon: Icon(Icons.manage_search),
-                label: Text('Administrar Reservas'),
-                onPressed: () => Navigator.pushNamed(context, '/reservations'),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton.icon(
-                icon: Icon(Icons.receipt_long),
-                label: Text('Ver Pagos'),
-                onPressed: () => Navigator.pushNamed(context, '/pagos'),
-              ),
-              ElevatedButton.icon(
-                icon: Icon(Icons.directions_car),
-                label: Text('Registrar Auto'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          RegistrarAutoPage(clienteId: widget.cliente.id),
-                    ),
-                  );
-                },
-              ),
-              ElevatedButton.icon(
-                icon: Icon(Icons.list),
-                label: Text('Mis Autos'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          ListarAutosPage(clienteId: widget.cliente.id),
-                    ),
-                  );
-                },
+                  ),
+                ),
               ),
             ],
           ),

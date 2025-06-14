@@ -66,29 +66,9 @@ class _PagosPageState extends State<PagosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Pagos Registrados')),
+      appBar: AppBar(title: Text('Registro de Pagos')),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              children: [
-                Text(
-                  'Pagos realizados este mes: $pagosDelMes',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Pagos pendientes: $pagosPendientes',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(),
           Expanded(
             child: pagos.isEmpty
                 ? Center(child: Text('No hay pagos registrados'))
